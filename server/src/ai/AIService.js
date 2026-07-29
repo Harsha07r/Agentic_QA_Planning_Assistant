@@ -55,71 +55,97 @@ Requirement:\n${requirement}\n\nAcceptance Criteria:\n${acceptanceText}\n\nImple
 Include a broad range of test types: unit tests, API tests, integration tests, end-to-end tests, Playwright tests, manual tests, edge cases, permission cases, failure states, and regression areas. Ensure the JSON is syntactically valid.`;
   }
 
-  async _callGemini(prompt, apiKey) {
-  try {
-    const ai = new GoogleGenAI({
-      apiKey,
-    });
+async _callGemini(prompt, apiKey) {
+  const ai = new GoogleGenAI({ apiKey });
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-      config: {
-        temperature: 0.2,
-        maxOutputTokens: 1200,
-        responseMimeType: "application/json",
-      },
-    });
+  const models = [
+    "gemini-3.5-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite",
+    "gemini-2.0-flash",
+  ];
 
-   if (!response.text) {
+  let lastError;
+
+  for (const model of models) {
+    try {
+      console.log(`Using Gemini model: ${model}`);
+
+      const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+          temperature: 0.2,
+          maxOutputTokens: 4096,
+          responseMimeType: "application/json",
+        },
+      });
+
+      const text =
+        typeof response.text === "function"
+          ? await response.text()
+          : response.text;
+
+      if (!text) {
+        throw new Error("Gemini returned an empty response.");
+      }
+
+      return text;
+    } catch (err) {
+      lastError = err;
+
+      // Try the next model if this one is unavailable or rate-limited
+      if ([404, 429, 503].includes(err.status)) {
+        console.warn(
+          `Model "${model}" unavailable (${err.status}). Trying next model...`
+        );
+        continue;
+      }
+
+      throw err;
+    }
+  }
+
   throw new AppError(
-    "Gemini returned an empty response",
+    `All Gemini models failed. Last error: ${lastError?.message}`,
     502
   );
 }
 
-return response.text;
-
-  } catch (err) {
-    throw new AppError(
-      `Gemini API Error: ${err.message}`,
-      502
-    );
-  }
-}
 _extractJson(text) {
-  if (!text) {
-    throw new AppError(
-      "Gemini returned an empty response",
-      502
-    );
+  if (!text || typeof text !== "string") {
+    throw new AppError("Gemini returned an empty response", 502);
   }
 
   let cleaned = text.trim();
 
-  if (cleaned.startsWith("```json")) {
-    cleaned = cleaned
-      .replace(/^```json/, "")
-      .replace(/```$/, "")
-      .trim();
-  }
+  // Remove markdown fences
+  cleaned = cleaned
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/\s*```$/, "")
+    .trim();
 
-  if (cleaned.startsWith("```")) {
-    cleaned = cleaned
-      .replace(/^```/, "")
-      .replace(/```$/, "")
-      .trim();
-  }
-
+  // Try parsing directly
   try {
     return JSON.parse(cleaned);
-  } catch {
-    throw new AppError(
-      "Gemini returned invalid JSON",
-      502
-    );
+  } catch {}
+
+  // Extract first JSON object
+  const firstBrace = cleaned.indexOf("{");
+  const lastBrace = cleaned.lastIndexOf("}");
+
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    const json = cleaned.substring(firstBrace, lastBrace + 1);
+
+    try {
+      return JSON.parse(json);
+    } catch {}
   }
+
+  throw new AppError("Gemini returned invalid JSON", 502);
 }
+
   _validatePayload(payload) {
     if (!payload || typeof payload !== 'object') {
       throw new AppError('AI response payload must be a JSON object', 502);
