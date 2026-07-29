@@ -69,8 +69,16 @@ export default function Sidebar({ isOpen, onClose }) {
 
         <div className="border-t border-slate-200 p-4">
           <div className="rounded-lg bg-brand-50 p-3">
-            <p className="text-xs font-medium text-brand-700">AI Assistant</p>
-            <p className="mt-0.5 text-xs text-brand-600/80">Gemini integration coming soon</p>
+           <div className="border-t border-slate-200 p-4">
+  <div className="rounded-lg bg-brand-50 p-3">
+    <p className="text-xs font-semibold text-brand-700">
+      AI-Powered Test Generation
+    </p>
+    <p className="mt-1 text-xs text-brand-600/80">
+      Generate intelligent QA plans using Google Gemini.
+    </p>
+  </div>
+</div>
           </div>
         </div>
       </aside>
