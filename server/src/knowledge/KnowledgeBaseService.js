@@ -1,7 +1,12 @@
 import fs from 'fs/promises';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
-const knowledgeDir = path.resolve(new URL(import.meta.url).pathname, '../knowledge');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// This directory already contains the markdown files
+const knowledgeDir = __dirname;
 
 class KnowledgeBaseService {
   constructor() {

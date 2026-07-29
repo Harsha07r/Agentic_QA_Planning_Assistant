@@ -1,14 +1,6 @@
-import fetch from 'node-fetch';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { GoogleGenAI } from "@google/genai";
 import knowledgeBaseService from '../knowledge/KnowledgeBaseService.js';
 import { AppError } from '../utils/AppError.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const GEMINI_MODEL = 'gemini-1.5-mini';
-const GEMINI_ENDPOINT = `https://gemini.googleapis.com/v1/models/${GEMINI_MODEL}:generateText`;
 
 class AIService {
   async generateTests({ requirement, acceptanceCriteria, implementationSummary }) {
@@ -64,46 +56,70 @@ Include a broad range of test types: unit tests, API tests, integration tests, e
   }
 
   async _callGemini(prompt, apiKey) {
-    const response = await fetch(GEMINI_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        prompt,
-        temperature: 0.2,
-        max_output_tokens: 1200,
-      }),
+  try {
+    const ai = new GoogleGenAI({
+      apiKey,
     });
 
-    const body = await response.text();
-    if (!response.ok) {
-      const errorMessage = `Gemini API request failed with status ${response.status}: ${body}`;
-      throw new AppError(errorMessage, 502);
-    }
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+      config: {
+        temperature: 0.2,
+        maxOutputTokens: 1200,
+        responseMimeType: "application/json",
+      },
+    });
 
-    return body;
+   if (!response.text) {
+  throw new AppError(
+    "Gemini returned an empty response",
+    502
+  );
+}
+
+return response.text;
+
+  } catch (err) {
+    throw new AppError(
+      `Gemini API Error: ${err.message}`,
+      502
+    );
+  }
+}
+_extractJson(text) {
+  if (!text) {
+    throw new AppError(
+      "Gemini returned an empty response",
+      502
+    );
   }
 
-  _extractJson(responseText) {
-    try {
-      return JSON.parse(responseText);
-    } catch (jsonError) {
-      const firstBrace = responseText.indexOf('{');
-      const lastBrace = responseText.lastIndexOf('}');
-      if (firstBrace >= 0 && lastBrace > firstBrace) {
-        const jsonString = responseText.slice(firstBrace, lastBrace + 1);
-        try {
-          return JSON.parse(jsonString);
-        } catch (nestedError) {
-          throw new AppError('Gemini response contained invalid JSON', 502);
-        }
-      }
-      throw new AppError('Gemini response did not contain valid JSON', 502);
-    }
+  let cleaned = text.trim();
+
+  if (cleaned.startsWith("```json")) {
+    cleaned = cleaned
+      .replace(/^```json/, "")
+      .replace(/```$/, "")
+      .trim();
   }
 
+  if (cleaned.startsWith("```")) {
+    cleaned = cleaned
+      .replace(/^```/, "")
+      .replace(/```$/, "")
+      .trim();
+  }
+
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    throw new AppError(
+      "Gemini returned invalid JSON",
+      502
+    );
+  }
+}
   _validatePayload(payload) {
     if (!payload || typeof payload !== 'object') {
       throw new AppError('AI response payload must be a JSON object', 502);
