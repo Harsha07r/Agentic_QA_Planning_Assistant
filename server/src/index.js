@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import connectDB from './config/db.js';
 import planRoutes from './routes/planRoutes.js';
 import knowledgeRoutes from './routes/knowledgeRoutes.js';
+import aiRoutes from './routes/aiRoutes.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -36,6 +37,7 @@ app.get('/api/health', (req, res) => {
 
 app.use('/api/plans', planRoutes);
 app.use('/api/knowledge', knowledgeRoutes);
+app.use('/api/ai', aiRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
