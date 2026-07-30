@@ -126,6 +126,18 @@ npm run dev
 5. Generated plans can be edited and versioned.
 
 ---
+## Intentionally Excluded Scope
+
+Due to the assignment timeline, the following features were intentionally left out:
+
+- User authentication and authorization
+- Team collaboration and sharing
+- PDF/Excel export
+- Advanced filtering and search
+- Automated Playwright test execution
+- Role-based access control
+
+The implementation focused on delivering the complete AI-assisted QA planning workflow. 
 
 ## 👨‍💻 Author
 
