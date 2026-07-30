@@ -5,7 +5,7 @@ An AI-powered QA Planning Assistant that helps QA Engineers create, manage, vers
 ## Live Demo
 
 Frontend:
-https://YOUR-VERCEL-URL.vercel.app
+https://agentic-qa-planning-assistant.vercel.app/
 
 Backend API:
 https://agentic-qa-planning-assistant.onrender.com/api/health
@@ -124,36 +124,6 @@ npm run dev
 3. Relevant QA guidelines are retrieved from the Knowledge Base.
 4. Google Gemini generates structured QA test cases.
 5. Generated plans can be edited and versioned.
-
----
-
-## 📸 Screenshots
-
-### Dashboard
-
-> Add a screenshot here
-
-### Create QA Plan
-
-> Add a screenshot here
-
-### AI Generated Test Cases
-
-> Add a screenshot here
-
-### Version History
-
-> Add a screenshot here
-
----
-
-## 📈 Future Improvements
-
-- Authentication
-- Team collaboration
-- Export to PDF
-- Advanced search & filters
-- Playwright script generation
 
 ---
 
