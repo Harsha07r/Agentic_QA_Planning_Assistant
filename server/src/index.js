@@ -34,7 +34,13 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
-
+app.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Agentic QA Planning Assistant API',
+    health: '/api/health',
+  });
+});
 app.use('/api/plans', planRoutes);
 app.use('/api/knowledge', knowledgeRoutes);
 app.use('/api/ai', aiRoutes);
